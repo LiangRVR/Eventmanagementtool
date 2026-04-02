@@ -1,21 +1,17 @@
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Plus, Calendar, Users, TrendingUp, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Users, TrendingUp, Edit } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useAppContext } from '../context/AppContext';
 import { motion } from 'motion/react';
-import { mockEvents } from '../data/mockData';
 
 export default function OrganizerDashboard() {
   const navigate = useNavigate();
-  const { organizerEvents, userName } = useAppContext();
+  const { events, userName } = useAppContext();
 
-  // Combine mock events and created events for demo
-  const allEvents = [...mockEvents.slice(0, 3), ...organizerEvents];
-
-  const totalEvents = allEvents.length;
-  const totalAttendees = allEvents.reduce((sum, event) => sum + event.registered, 0);
-  const upcomingEvents = allEvents.filter(event => new Date(event.date) >= new Date()).length;
+  const totalEvents = events.length;
+  const totalAttendees = events.reduce((sum, event) => sum + event.registered, 0);
+  const upcomingEvents = events.filter(event => new Date(event.date) >= new Date()).length;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -78,9 +74,9 @@ export default function OrganizerDashboard() {
           <h3 className="text-gray-900">My Events</h3>
         </div>
 
-        {allEvents.length > 0 ? (
+        {events.length > 0 ? (
           <div className="space-y-3">
-            {allEvents.map((event, index) => (
+            {events.map((event, index) => (
               <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -97,13 +93,13 @@ export default function OrganizerDashboard() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 mb-2">
                       <h4 className="text-gray-900 text-sm line-clamp-1 flex-1">{event.title}</h4>
-                      <button
-                        onClick={() => {/* Show menu */}}
-                        className="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors"
-                        aria-label="More options"
-                      >
-                        <MoreVertical className="w-4 h-4 text-gray-600" />
-                      </button>
+                      {(() => {
+                        const isPast = new Date(event.date) < new Date();
+                        const isFull = event.registered >= event.capacity;
+                        if (isPast) return <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 whitespace-nowrap">Completed</span>;
+                        if (isFull) return <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600 whitespace-nowrap">Full</span>;
+                        return <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 whitespace-nowrap">Upcoming</span>;
+                      })()}
                     </div>
                     <Badge className="bg-purple-50 text-purple-700 text-xs mb-2">
                       {event.category}
@@ -127,7 +123,7 @@ export default function OrganizerDashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="px-4 pb-4 flex gap-2">
                   <Button
                     onClick={() => navigate(`/organizer/attendees/${event.id}`)}
@@ -160,6 +156,13 @@ export default function OrganizerDashboard() {
             <p className="text-sm text-gray-600 mb-6">
               Create your first event to get started
             </p>
+            <Button
+              onClick={() => navigate('/organizer/create-event')}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Event
+            </Button>
           </div>
         )}
       </div>

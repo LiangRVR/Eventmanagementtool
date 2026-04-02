@@ -1,4 +1,5 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
+import { useAppContext } from "./context/AppContext";
 import SplashScreen from "./screens/SplashScreen";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import HomeScreen from "./screens/HomeScreen";
@@ -12,6 +13,13 @@ import CreateEventScreen from "./screens/CreateEventScreen";
 import EditEventScreen from "./screens/EditEventScreen";
 import AttendeeManagementScreen from "./screens/AttendeeManagementScreen";
 import ProfileScreen from "./screens/ProfileScreen";
+
+function RequireOrganizer({ children }: { children: React.ReactNode }) {
+  const { userType, userName } = useAppContext();
+  if (!userName) return <Navigate to="/welcome" replace />;
+  if (userType !== 'organizer') return <Navigate to="/home" replace />;
+  return <>{children}</>;
+}
 
 export const router = createBrowserRouter([
   {
@@ -48,19 +56,19 @@ export const router = createBrowserRouter([
   },
   {
     path: "/organizer/dashboard",
-    Component: OrganizerDashboard,
+    element: <RequireOrganizer><OrganizerDashboard /></RequireOrganizer>,
   },
   {
     path: "/organizer/create-event",
-    Component: CreateEventScreen,
+    element: <RequireOrganizer><CreateEventScreen /></RequireOrganizer>,
   },
   {
     path: "/organizer/edit-event/:id",
-    Component: EditEventScreen,
+    element: <RequireOrganizer><EditEventScreen /></RequireOrganizer>,
   },
   {
     path: "/organizer/attendees/:id",
-    Component: AttendeeManagementScreen,
+    element: <RequireOrganizer><AttendeeManagementScreen /></RequireOrganizer>,
   },
   {
     path: "/profile",

@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { useAppContext } from '../context/AppContext';
 import { motion } from 'motion/react';
+import { toast } from 'sonner';
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
@@ -88,14 +89,20 @@ export default function ProfileScreen() {
                   <Bell className="w-5 h-5 text-gray-600" />
                   <span className="text-sm text-gray-700">Event reminders</span>
                 </div>
-                <Switch defaultChecked />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Demo</span>
+                  <Switch defaultChecked />
+                </div>
               </div>
               <div className="px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-gray-600" />
                   <span className="text-sm text-gray-700">Event updates</span>
                 </div>
-                <Switch defaultChecked />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Demo</span>
+                  <Switch defaultChecked />
+                </div>
               </div>
             </div>
           </div>
@@ -104,14 +111,14 @@ export default function ProfileScreen() {
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <h3 className="text-gray-900 text-sm font-medium px-4 pt-4 pb-2">Account</h3>
             <div className="divide-y divide-gray-100">
-              <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+              <button onClick={() => toast.info('Coming soon')} className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-gray-600" />
                   <span className="text-sm text-gray-700">Edit profile</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </button>
-              <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+              <button onClick={() => toast.info('Coming soon')} className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-gray-600" />
                   <span className="text-sm text-gray-700">Privacy & Security</span>
@@ -125,7 +132,7 @@ export default function ProfileScreen() {
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <h3 className="text-gray-900 text-sm font-medium px-4 pt-4 pb-2">Support</h3>
             <div className="divide-y divide-gray-100">
-              <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+              <button onClick={() => toast.info('Coming soon')} className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3">
                   <HelpCircle className="w-5 h-5 text-gray-600" />
                   <span className="text-sm text-gray-700">Help Center</span>

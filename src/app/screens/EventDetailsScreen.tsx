@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Calendar, MapPin, Users, Bookmark, Share2, Clock, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Bookmark, Share2, Clock, User as UserIcon, Mail, Link, X } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { mockEvents } from '../data/mockData';
 import { useAppContext } from '../context/AppContext';
 import { motion } from 'motion/react';
+import { toast } from 'sonner';
 
 export default function EventDetailsScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { savedEvents, toggleSaveEvent, registeredEvents, registerForEvent, addNotification } = useAppContext();
+  const { savedEvents, toggleSaveEvent, registeredEvents, registerForEvent, unregisterFromEvent, addNotification, getEventById } = useAppContext();
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const event = mockEvents.find(e => e.id === id);
+  const event = getEventById(id ?? '');
 
   if (!event) {
     return (
@@ -43,6 +44,35 @@ export default function EventDetailsScreen() {
     navigate('/rsvp-confirmation', { state: { event } });
   };
 
+  const handleCancelRegistration = () => {
+    unregisterFromEvent(event.id);
+    addNotification({
+      title: 'Registration Canceled',
+      message: `Your registration for ${event.title} has been canceled`,
+      time: 'Just now',
+      read: false,
+      type: 'update',
+    });
+    setShowCancelConfirm(false);
+    toast.success('Registration canceled');
+  };
+
+  const handleShare = (option: string) => {
+    const url = window.location.href;
+    if (option === 'Copy Link') {
+      navigator.clipboard.writeText(url).then(() => toast.success('Link copied!'));
+    } else if (option === 'Email') {
+      window.location.href = `mailto:?subject=${encodeURIComponent(event.title)}&body=${encodeURIComponent(`Check out this event: ${event.title}\n${url}`)}`;
+    } else if (option === 'Message') {
+      if (navigator.share) {
+        navigator.share({ title: event.title, url });
+      } else {
+        navigator.clipboard.writeText(url).then(() => toast.success('Link copied!'));
+      }
+    }
+    setShowShareSheet(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
       {/* Header Image */}
@@ -53,7 +83,7 @@ export default function EventDetailsScreen() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
+
         {/* Header Actions */}
         <div className="absolute top-12 left-0 right-0 px-6 flex items-center justify-between">
           <button
@@ -187,18 +217,27 @@ export default function EventDetailsScreen() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 shadow-lg">
         <div className="max-w-md mx-auto">
           {isRegistered ? (
-            <div className="flex items-center gap-3">
-              <div className="flex-1 p-3 bg-green-50 rounded-xl border border-green-200">
-                <p className="text-green-800 text-sm font-medium text-center">
-                  ✓ You're registered for this event
-                </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 p-3 bg-green-50 rounded-xl border border-green-200">
+                  <p className="text-green-800 text-sm font-medium text-center">
+                    ✓ You're registered for this event
+                  </p>
+                </div>
+                <Button
+                  onClick={() => navigate('/my-events')}
+                  variant="outline"
+                  className="h-12"
+                >
+                  My Events
+                </Button>
               </div>
               <Button
-                onClick={() => navigate('/my-events')}
-                variant="outline"
-                className="h-12"
+                onClick={() => setShowCancelConfirm(true)}
+                variant="ghost"
+                className="w-full h-10 text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
               >
-                View Details
+                Cancel Registration
               </Button>
             </div>
           ) : (
@@ -228,18 +267,34 @@ export default function EventDetailsScreen() {
           >
             <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
             <h3 className="text-gray-900 mb-4">Share Event</h3>
-            <div className="grid grid-cols-4 gap-4 mb-4">
-              {['Message', 'Email', 'Copy Link', 'More'].map(option => (
-                <button
-                  key={option}
-                  className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors"
-                >
-                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <Share2 className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <span className="text-xs text-gray-700">{option}</span>
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <button
+                onClick={() => handleShare('Message')}
+                className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <Share2 className="w-5 h-5 text-indigo-600" />
+                </div>
+                <span className="text-xs text-gray-700">Share</span>
+              </button>
+              <button
+                onClick={() => handleShare('Email')}
+                className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-purple-600" />
+                </div>
+                <span className="text-xs text-gray-700">Email</span>
+              </button>
+              <button
+                onClick={() => handleShare('Copy Link')}
+                className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <Link className="w-5 h-5 text-green-600" />
+                </div>
+                <span className="text-xs text-gray-700">Copy Link</span>
+              </button>
             </div>
             <Button
               onClick={() => setShowShareSheet(false)}
@@ -248,6 +303,44 @@ export default function EventDetailsScreen() {
             >
               Cancel
             </Button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Cancel Registration Confirmation */}
+      {showCancelConfirm && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+          onClick={() => setShowCancelConfirm(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-3xl p-6 max-w-sm w-full"
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <X className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-gray-900 text-center mb-2">Cancel Registration?</h3>
+            <p className="text-sm text-gray-600 text-center mb-6">
+              You will lose your spot at <strong>{event.title}</strong>. You can re-register if spots are still available.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowCancelConfirm(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Keep Registration
+              </Button>
+              <Button
+                onClick={handleCancelRegistration}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                Cancel
+              </Button>
+            </div>
           </motion.div>
         </div>
       )}

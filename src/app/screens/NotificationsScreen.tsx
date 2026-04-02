@@ -101,9 +101,9 @@ export default function NotificationsScreen() {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bell className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-900 font-medium mb-2">No notifications</p>
+            <p className="text-gray-900 font-medium mb-2">You're all caught up</p>
             <p className="text-sm text-gray-600">
-              We'll notify you about event updates and reminders
+              Register for events to receive reminders and updates here
             </p>
           </div>
         )}

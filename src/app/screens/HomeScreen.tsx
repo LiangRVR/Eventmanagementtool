@@ -1,21 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Search, Filter, Bell, User, Calendar, MapPin, Users, Bookmark, Plus } from 'lucide-react';
-import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { mockEvents } from '../data/mockData';
 import { useAppContext } from '../context/AppContext';
 import { motion } from 'motion/react';
 
 export default function HomeScreen() {
   const navigate = useNavigate();
-  const { userType, userName, savedEvents, notifications } = useAppContext();
+  const { userType, userName, savedEvents, toggleSaveEvent, notifications, events } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const filteredEvents = mockEvents.filter(event =>
+  const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     event.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
     event.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -99,7 +97,7 @@ export default function HomeScreen() {
       <div className="px-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-gray-900">Upcoming Events</h3>
-          <button className="text-indigo-600 text-sm font-medium">See all</button>
+          <button onClick={() => navigate('/search')} className="text-indigo-600 text-sm font-medium">See all</button>
         </div>
 
         <div className="space-y-4">
@@ -126,7 +124,7 @@ export default function HomeScreen() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Save functionality handled in EventDetails
+                    toggleSaveEvent(event.id);
                   }}
                   className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors"
                   aria-label="Save event"
@@ -140,27 +138,27 @@ export default function HomeScreen() {
                   />
                 </button>
               </div>
-              
+
               <div className="p-4">
                 <h4 className="text-gray-900 mb-2 line-clamp-1">{event.title}</h4>
-                
+
                 <div className="space-y-2 mb-3">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="w-4 h-4 text-indigo-600" />
-                    <span>{new Date(event.date).toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric' 
+                    <span>{new Date(event.date).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric'
                     })}</span>
                     <span className="text-gray-400">•</span>
                     <span>{event.time.split(' - ')[0]}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <MapPin className="w-4 h-4 text-indigo-600" />
                     <span className="line-clamp-1">{event.location}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Users className="w-4 h-4 text-indigo-600" />
                     <span>{event.registered} registered</span>

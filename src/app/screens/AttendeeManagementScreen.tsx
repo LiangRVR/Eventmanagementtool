@@ -1,11 +1,12 @@
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Users, Mail, Download, Search } from 'lucide-react';
+import { ArrowLeft, Users, Mail, Download, Search, CheckSquare, Square, Info } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { mockEvents } from '../data/mockData';
+import { useAppContext } from '../context/AppContext';
 import { motion } from 'motion/react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 // Mock attendee data
 const generateAttendees = (count: number) => {
@@ -16,7 +17,7 @@ const generateAttendees = (count: number) => {
     'Ashley Thomas', 'Daniel Jackson', 'Melissa Harris', 'Ryan Clark',
     'Stephanie Lewis', 'Justin Walker', 'Rebecca Hall', 'Brandon Allen'
   ];
-  
+
   return Array.from({ length: Math.min(count, 20) }, (_, i) => ({
     id: `attendee-${i + 1}`,
     name: names[i % names.length],
@@ -29,9 +30,11 @@ const generateAttendees = (count: number) => {
 export default function AttendeeManagementScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getEventById } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
+  const [checkedIn, setCheckedIn] = useState<Set<string>>(new Set());
 
-  const event = mockEvents.find(e => e.id === id);
+  const event = getEventById(id ?? '');
 
   if (!event) {
     return (
@@ -51,6 +54,37 @@ export default function AttendeeManagementScreen() {
     attendee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     attendee.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const toggleCheckIn = (attendeeId: string) => {
+    setCheckedIn(prev => {
+      const next = new Set(prev);
+      if (next.has(attendeeId)) next.delete(attendeeId);
+      else next.add(attendeeId);
+      return next;
+    });
+  };
+
+  const handleEmailAll = () => {
+    const bcc = attendees.map(a => a.email).join(',');
+    const subject = encodeURIComponent(`Update about: ${event.title}`);
+    window.location.href = `mailto:?bcc=${bcc}&subject=${subject}`;
+  };
+
+  const handleExport = () => {
+    const header = 'Name,Email,Registered,Status,Checked In';
+    const rows = attendees.map(a =>
+      `"${a.name}","${a.email}","${a.registeredDate}","${a.status}","${checkedIn.has(a.id) ? 'Yes' : 'No'}"`
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `attendees-${event.title.replace(/\s+/g, '-').toLowerCase()}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    toast.success('Attendee list exported');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-6">
@@ -104,15 +138,21 @@ export default function AttendeeManagementScreen() {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button variant="outline" className="flex-1 h-10 text-sm">
+          <Button onClick={handleEmailAll} variant="outline" className="flex-1 h-10 text-sm">
             <Mail className="w-4 h-4 mr-2" />
             Email All
           </Button>
-          <Button variant="outline" className="flex-1 h-10 text-sm">
+          <Button onClick={handleExport} variant="outline" className="flex-1 h-10 text-sm">
             <Download className="w-4 h-4 mr-2" />
-            Export List
+            Export CSV
           </Button>
         </div>
+      </div>
+
+      {/* Demo Banner */}
+      <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
+        <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800">Showing simulated attendee data for demo purposes. In production, this would list real registrations.</p>
       </div>
 
       {/* Attendee List */}
@@ -133,8 +173,17 @@ export default function AttendeeManagementScreen() {
               className="bg-white rounded-2xl p-4 shadow-sm"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold text-lg">
+                <button
+                  onClick={() => toggleCheckIn(attendee.id)}
+                  className="flex-shrink-0 transition-colors"
+                  aria-label={checkedIn.has(attendee.id) ? 'Mark not checked in' : 'Mark checked in'}
+                >
+                  {checkedIn.has(attendee.id)
+                    ? <CheckSquare className="w-5 h-5 text-green-600" />
+                    : <Square className="w-5 h-5 text-gray-300" />}
+                </button>
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-semibold">
                     {attendee.name.split(' ').map(n => n[0]).join('')}
                   </span>
                 </div>
@@ -150,16 +199,21 @@ export default function AttendeeManagementScreen() {
                     >
                       {attendee.status}
                     </Badge>
+                    {checkedIn.has(attendee.id) && (
+                      <Badge className="text-xs bg-blue-100 text-blue-800">Checked in</Badge>
+                    )}
                   </div>
                   <p className="text-xs text-gray-600 mb-1">{attendee.email}</p>
                   <p className="text-xs text-gray-500">Registered {attendee.registeredDate}</p>
                 </div>
-                <button
+                <a
+                  href={`mailto:${attendee.email}`}
                   className="w-8 h-8 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors"
-                  aria-label="More options"
+                  aria-label={`Email ${attendee.name}`}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <Mail className="w-4 h-4 text-gray-600" />
-                </button>
+                </a>
               </div>
             </motion.div>
           ))}
