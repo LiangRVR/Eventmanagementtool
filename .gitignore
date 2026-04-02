@@ -2,6 +2,9 @@
 node_modules/
 .pnp
 .pnp.js
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
 
 # Build output
 dist/
@@ -48,6 +51,8 @@ Thumbs.db
 .agents/
 .skills/
 .copilot/
+.claude/
+skills-lock.json
 .github/copilot-instructions.md
 **/*.instructions.md
 **/*.prompt.md
